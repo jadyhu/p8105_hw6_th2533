@@ -216,4 +216,68 @@ weather_df =
 ```
 
 
+Fit a simple linear regression with Tmax on Tmin
+```{r}
+model = lm(tmax ~ tmin, data = weather_df)
+summary(model)
+```
 
+```{r}
+boot_sample = function(df) {
+  sample_frac(df, replace = TRUE)
+}
+boot_straps = 
+  data_frame(
+    strap_number = 1:5000,
+    strap_sample = rerun(5000, boot_sample(weather_df))
+  )
+
+boot_straps
+```
+Get the adjusted R square.
+
+```{r}
+bootstrap_results = 
+boot_straps %>% 
+  mutate(models = map(strap_sample, ~lm(tmax ~ tmin, data = .x)),
+    results = map(models, broom::glance),
+    results_coeff = map(models, broom::tidy)) %>% 
+  select(-strap_sample, -models) %>% 
+  unnest() %>% 
+  select(term, estimate, r.squared) 
+  
+bootstrap_results %>%   
+  select(r.squared) 
+
+bootstrap_results %>% 
+ggplot(aes(x = r.squared)) + geom_density()+
+   labs(title = "Distribution of R-squared", 
+       x = "R-squared",
+       y = "Density")
+  
+```
+
+The 95% CI limit for adjusted R square is between `r quantile(bootstrap_results$r.squared,probs=0.025)` and `r quantile(bootstrap_results$r.squared,probs=0.975)`
+
+```{r}
+bootstrap_logestimates = bootstrap_results %>% 
+  pivot_wider(
+    names_from = term,
+    values_from = estimate
+  ) %>% 
+  rename(
+    beta0 = "(Intercept)",
+    beta1 = "tmin",
+  ) %>% 
+  mutate(
+    log_coef = log(beta0*beta1)
+  )
+
+bootstrap_logestimates%>% 
+ggplot(aes(x = log_coef)) + geom_density()+
+   labs(title = "Distribution of log_eff", 
+       x = "log_coef",
+       y = "Density")
+
+```
+The 95% CI limit for log_coef is between `r quantile(bootstrap_logestimates$log_coef,probs=0.025)` and `r quantile(bootstrap_logestimates$log_coef,probs=0.975)`
