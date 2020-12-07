@@ -134,7 +134,10 @@ I used stepwise selection method to choose an appropriate model. The selection l
 Use those final predictors to run a final regression model.
 ```{r}
 final_mod = lm(bwt ~ babysex + bhead + blength + delwt + fincome + gaweeks + mheight + mrace + parity + ppwt + smoken, data = baby_df) 
-summary(final_mod)
+
+final_mod %>% 
+  broom::tidy() %>% 
+  knitr::kable(digits = 3)
 ```
 
 ```{r}
@@ -151,16 +154,49 @@ labs(title = "Model residuals against Fitted values",
 The residuals are randomly scattered around y = 0. Therefore, the model is an appropriate model for this birthweight data. 
 
 
+Compare model with the other two using cross validation.
+
+```{r}
+cv_df = 
+  crossv_mc(baby_df, 100) 
+
+cv_df =
+  cv_df %>% 
+  mutate(
+    train = map(train, as_tibble),
+    test = map(test, as_tibble))
+
+cv_df = 
+  cv_df %>% 
+  mutate(
+    final_mod  = map(train, ~lm(bwt ~ babysex + bhead + blength + delwt + fincome + gaweeks + mheight + mrace + parity + ppwt + smoken, data = .x)),
+    mod1 = map(train, ~lm(bwt ~ blength + gaweeks, data = .x)),
+    mod2  = map(train, ~lm(bwt ~ bhead +  blength + babysex + babysex * blength + babysex * bhead + blength * bhead + babysex * blength * bhead, data = .x))) %>% 
+  mutate(
+    rmse_final = map2_dbl(final_mod, test, ~rmse(model = .x, data = .y)),
+    rmse1 = map2_dbl(mod1, test, ~rmse(model = .x, data = .y)),
+    rmse2 = map2_dbl(mod2, test, ~rmse(model = .x, data = .y))) 
+
+```
 
 
 
 
+Make a plot to compare rmse for three models.
+```{r}
+cv_df %>% 
+  select(starts_with("rmse")) %>% 
+  pivot_longer(
+    everything(),
+    names_to = "model", 
+    values_to = "rmse",
+    names_prefix = "rmse_") %>% 
+  mutate(model = fct_inorder(model)) %>% 
+  ggplot(aes(x = model, y = rmse)) + geom_violin()
+```
 
 
-
-
-
-
+From the plot above, the final model that I built has the lowest mean rmse. Therefore, this model is the best.
 
 
 
