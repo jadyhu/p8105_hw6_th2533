@@ -120,8 +120,7 @@ baby_df =
 The birthweight dataset contains `r nrow(baby_df)` rows and `r ncol(baby_df)` columns. 
 
 
-fit a model
-
+Fit a model.
 ```{r}
 model_fit = lm(bwt ~ ., data = baby_df)
 step.model <- step(model_fit, direction = "both", 
@@ -197,6 +196,24 @@ cv_df %>%
 
 
 From the plot above, the final model that I built has the lowest mean rmse. Therefore, this model is the best.
+
+
+
+# Question 3
+
+```{r}
+weather_df = 
+  rnoaa::meteo_pull_monitors(
+    c("USW00094728"),
+    var = c("PRCP", "TMIN", "TMAX"), 
+    date_min = "2017-01-01",
+    date_max = "2017-12-31") %>%
+  mutate(
+    name = recode(id, USW00094728 = "CentralPark_NY"),
+    tmin = tmin / 10,
+    tmax = tmax / 10) %>%
+  select(name, id, everything())
+```
 
 
 
