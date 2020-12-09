@@ -266,11 +266,11 @@ bootstrap_logestimates = bootstrap_results %>%
     values_from = estimate
   ) %>% 
   rename(
-    beta0 = "(Intercept)",
-    beta1 = "tmin",
+    beta_0 = "(Intercept)",
+    beta_1 = "tmin",
   ) %>% 
   mutate(
-    log_coef = log(beta0*beta1)
+    log_coef = log(beta_0*beta_1)
   )
 
 bootstrap_logestimates%>% 
@@ -280,4 +280,4 @@ ggplot(aes(x = log_coef)) + geom_density()+
        y = "Density")
 
 ```
-The 95% CI limit for log_coef is between `r quantile(bootstrap_logestimates$log_coef,probs=0.025)` and `r quantile(bootstrap_logestimates$log_coef,probs=0.975)`
+The 95% CI limit for logcoef is between `r quantile(bootstrap_logestimates$log_coef,probs=0.025)` and `r quantile(bootstrap_logestimates$log_coef,probs=0.975)`
