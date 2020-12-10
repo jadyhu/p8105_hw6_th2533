@@ -8,6 +8,7 @@ output: github_document
 ```{r setup, include=FALSE}
 library(tidyverse)
 library(viridis)
+set.seed(1234)
 knitr::opts_chunk$set(
 	echo = TRUE,
 	warning = FALSE,
